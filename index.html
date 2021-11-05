@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Gas Platform Now</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+</head>
+<body>
+  <div class="container">
+    <div class="p-5 mb-4 bg-light rounded-3" id="startForn">
+      <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">Start Here</h1>
+        <p>Get you free API key from <a href="https://explorer.blocknative.com/account">https://explorer.blocknative.com/account</a>.</p>
+        <label for="apiKey" class="form-label">Blocknative API Key</label>
+        <input type="text" class="form-control" id="apiKey" value="" required>
+        <hr/>
+        <button class="btn btn-primary btn-lg" type="button">Start</button>
+      </div>
+    </div>
+
+    <h1>Next Block: <span id="blockNb"></span></h1>
+    <h2>Base Price: <strong><span id="basePrice"></span></strong> Gwei
+      <br/>
+      Max Price: <strong><span id="maxPrice"></span></strong> Gwei</h2>
+
+    <div class="row">
+      <div class="col">
+        <div class="alert alert-success" role="alert">
+          <h2 class="alert-heading">(99 %) Price: <span id="estPrice"></span> Gwei</h2>
+          <p>Priority Fee: <span id="estPriorityFeePerGas"></span> Gwei</p>
+          <hr>
+          <p class="mb-0">Suggested Max Price: <span id="estMaxFeePerGas"></span> Gwei</p>
+        </div>
+      </div>
+      <div class="col">
+        <div class="alert alert-info" role="alert">
+          <h2 class="alert-heading">(80 %) Price: <span id="estPrice1"></span> Gwei</h2>
+          <p>Priority Fee: <span id="estPriorityFeePerGas1"></span> Gwei</p>
+          <hr>
+          <p class="mb-0">Suggested Max Price: <span id="estMaxFeePerGas1"></span> Gwei</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Previous <span id="nbBlocks"></span> Blocks</h2>
+    <p>Average Price: <strong><span id="avgPrice"></span></strong> Gwei</p>
+
+    <canvas id="myChart"></canvas>
+
+    <div id="div1"></div>
+
+  </div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  function calculateAverage(array) {
+      var total = 0;
+      var count = 0;
+
+      array.forEach(function(item, index) {
+          total += item;
+          count++;
+      });
+
+      return total / count;
+  }
+
+  const labels = [];
+
+  const data = {
+    labels: labels,
+    datasets: [{
+      type: 'line',
+      label: '99 %',
+      backgroundColor: 'rgb(15, 81, 50)',
+      borderColor: 'rgb(15, 81, 50)',
+      data: [],
+    },{
+      type: 'line',
+      label: '80 %',
+      backgroundColor: 'rgb(207, 244, 252)',
+      borderColor: 'rgb(207, 244, 252)',
+      data: [],
+    }]
+  };
+
+  const config = {
+    data: data,
+    options: {}
+  };
+
+  const myChart = new Chart(
+    document.getElementById('myChart'),
+    config
+  );
+</script>
+
+<script>
+  $(document).ready(function() {
+    $("button").click(function() {
+      var history = [{block: 0}];
+      
+      $("#startForn").hide();
+
+      setInterval(function() {
+        $.ajax({
+          dataType: "json",
+          url: "https://api.blocknative.com/gasprices/blockprices?confidenceLevels=99&confidenceLevels=80",
+          headers: {"Authorization": $("#apiKey").val()},
+          success: function(result) {
+            const liveDate = new Date(Date.now());
+            const maxPrice = result.maxPrice;
+            const blockNb = result.blockPrices[0].blockNumber;
+            const basePrice = result.blockPrices[0].baseFeePerGas;
+
+            const estPrice = result.blockPrices[0].estimatedPrices[0].price;
+            const estPriorityFeePerGas = result.blockPrices[0].estimatedPrices[0].maxPriorityFeePerGas;
+            const estMaxFeePerGas = result.blockPrices[0].estimatedPrices[0].maxFeePerGas;
+
+            const estPrice1 = result.blockPrices[0].estimatedPrices[1].price;
+            const estPriorityFeePerGas1 = result.blockPrices[0].estimatedPrices[1].maxPriorityFeePerGas;
+            const estMaxFeePerGas1 = result.blockPrices[0].estimatedPrices[1].maxFeePerGas;     
+
+            if (history[history.length-1].block == blockNb) {
+              myChart.data.labels.pop();
+              myChart.data.datasets.forEach((dataset) => {
+                  dataset.data.pop();
+              });
+
+              history[history.length-1].date = liveDate;
+              history[history.length-1].price = estPrice;
+              history[history.length-1].max = maxPrice;
+              history[history.length-1].tip = estPriorityFeePerGas;
+            } else {
+              history.push({
+                date: liveDate,
+                block: blockNb,
+                price: estPrice,
+                max: maxPrice,
+                tip: estPriorityFeePerGas
+              });
+            }
+
+            if (myChart.data.labels.length == 150) {
+              myChart.data.labels.shift();
+              myChart.data.datasets.forEach((dataset) => {
+                  dataset.data.shift();
+              });
+            }
+
+            myChart.data.labels.push(blockNb);
+            myChart.data.datasets[0].data.push(estPrice);
+            myChart.data.datasets[1].data.push(estPrice1);
+            myChart.update();
+
+            $("title").html(estPrice + " + "  + estPriorityFeePerGas + " Gwei");
+            $("#blockNb").html(blockNb);
+            $("#basePrice").html(Math.round(basePrice));
+            $("#maxPrice").html(maxPrice);
+
+            $("#estPrice").html(estPrice);
+            $("#estPriorityFeePerGas").html(estPriorityFeePerGas);
+            $("#estMaxFeePerGas").html(estMaxFeePerGas);
+
+            $("#estPrice1").html(estPrice1);
+            $("#estPriorityFeePerGas1").html(estPriorityFeePerGas1);
+            $("#estMaxFeePerGas1").html(estMaxFeePerGas1);
+
+            $("#nbBlocks").html(myChart.data.labels.length);
+            $("#avgPrice").html(Math.round(calculateAverage(myChart.data.datasets[0].data)));
+
+
+            //console.log(history);
+        }});
+      }, 6000);
+    });
+  });
+</script>
+
+</body>
+</html>
