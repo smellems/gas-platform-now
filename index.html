@@ -19,32 +19,41 @@
       </div>
     </div>
 
-    <h1>Next Block: <span id="blockNb"></span></h1>
-    <h2>Base Price: <strong><span id="basePrice"></span></strong> Gwei
-      <br/>
-      Max Price: <strong><span id="maxPrice"></span></strong> Gwei</h2>
+    <h1>Next Block: <strong id="blockNb"></strong></h1>
+    <div class="row">
+      <div class="col">
+        <h2>Base: <strong id="basePrice"></strong> Gwei
+          <br/>
+          Max: <strong id="maxPrice"></strong> Gwei</h2>
+      </div>
+      <div class="col">
+        <h3>Txs: <strong id="transactionCount"></strong>
+          <br/>
+          Since last: <strong id="msSinceLastBlock"></strong> seconds</h3>
+      </div>
+    </div>
 
     <div class="row">
       <div class="col">
         <div class="alert alert-success" role="alert">
-          <h2 class="alert-heading">(99 %) Price: <span id="estPrice"></span> Gwei</h2>
-          <p>Priority Fee: <span id="estPriorityFeePerGas"></span> Gwei</p>
+          <h2 class="alert-heading">(99 %) Price: <strong id="estPrice"></strong> Gwei</h2>
+          <p>Priority Fee: <strong id="estPriorityFeePerGas"></strong> Gwei</p>
           <hr>
-          <p class="mb-0">Suggested Max Price: <span id="estMaxFeePerGas"></span> Gwei</p>
+          <p class="mb-0">Suggested Max Price: <strong id="estMaxFeePerGas"></strong> Gwei</p>
         </div>
       </div>
       <div class="col">
         <div class="alert alert-info" role="alert">
-          <h2 class="alert-heading">(80 %) Price: <span id="estPrice1"></span> Gwei</h2>
-          <p>Priority Fee: <span id="estPriorityFeePerGas1"></span> Gwei</p>
+          <h2 class="alert-heading">(80 %) Price: <strong id="estPrice1"></strong> Gwei</h2>
+          <p>Priority Fee: <strong id="estPriorityFeePerGas1"></strong> Gwei</p>
           <hr>
-          <p class="mb-0">Suggested Max Price: <span id="estMaxFeePerGas1"></span> Gwei</p>
+          <p class="mb-0">Suggested Max Price: <strong id="estMaxFeePerGas1"></strong> Gwei</p>
         </div>
       </div>
     </div>
 
-    <h2>Previous <span id="nbBlocks"></span> Blocks</h2>
-    <p>Average Price: <strong><span id="avgPrice"></span></strong> Gwei</p>
+    <h2>Previous <strong id="nbBlocks"></strong> Blocks</h2>
+    <p>Average Price: <strong id="avgPrice"></strong> Gwei</p>
 
     <canvas id="myChart"></canvas>
   </div>
@@ -120,8 +129,11 @@
           success: function(result) {
             const liveDate = new Date(Date.now());
             const maxPrice = result.maxPrice;
+            const sinceLastBlock = result.msSinceLastBlock;
             const blockNb = result.blockPrices[0].blockNumber;
+
             const basePrice = result.blockPrices[0].baseFeePerGas;
+            const transactionCount = result.blockPrices[0].estimatedTransactionCount
 
             const estPrice = result.blockPrices[0].estimatedPrices[0].price;
             const estPriorityFeePerGas = result.blockPrices[0].estimatedPrices[0].maxPriorityFeePerGas;
@@ -167,6 +179,8 @@
             $("#blockNb").html(blockNb);
             $("#basePrice").html(Math.round(basePrice));
             $("#maxPrice").html(maxPrice);
+            $("#transactionCount").html(transactionCount);
+            $("#msSinceLastBlock").html(Math.round(sinceLastBlock/1000));
 
             $("#estPrice").html(estPrice);
             $("#estPriorityFeePerGas").html(estPriorityFeePerGas);
