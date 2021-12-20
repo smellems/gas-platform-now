@@ -37,25 +37,38 @@
       <div class="col">
         <div class="alert alert-success" role="alert">
           <h2 class="alert-heading">(99 %) Price: <strong id="estPrice"></strong> Gwei</h2>
-          <p>Priority Fee: <strong id="estPriorityFeePerGas"></strong> Gwei</p>
-          <hr>
-          <p class="mb-0">Suggested Max Price: <strong id="estMaxFeePerGas"></strong> Gwei</p>
+          <p>Priority Fee: <strong id="estPriorityFeePerGas"></strong> Gwei&nbsp;|&nbsp;
+            Suggested Max Price: <strong id="estMaxFeePerGas"></strong> Gwei</p>
         </div>
       </div>
       <div class="col">
         <div class="alert alert-info" role="alert">
           <h2 class="alert-heading">(80 %) Price: <strong id="estPrice1"></strong> Gwei</h2>
-          <p>Priority Fee: <strong id="estPriorityFeePerGas1"></strong> Gwei</p>
-          <hr>
-          <p class="mb-0">Suggested Max Price: <strong id="estMaxFeePerGas1"></strong> Gwei</p>
+          <p>Priority Fee: <strong id="estPriorityFeePerGas1"></strong> Gwei&nbsp;|&nbsp;
+            Suggested Max Price: <strong id="estMaxFeePerGas1"></strong> Gwei</p>
         </div>
       </div>
     </div>
 
-    <h2>Previous <strong id="nbBlocks"></strong> Blocks</h2>
+    <h2>Previous <strong id="nbBlocks"></strong> Blocks + Next Block</h2>
     <p>Average Price: <strong id="avgPrice"></strong> Gwei</p>
 
     <canvas id="myChart"></canvas>
+
+    <hr/>
+    <h2>Previous <strong id="nbHours"></strong> Hours</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Date Time</th>
+          <th scope="col">Avg</th>
+          <th scope="col">Min</th>
+          <th scope="col">Max</th>
+        </tr>
+      </thead>
+      <tbody id="myTable"><tr><td>0</td><td>0</td><td>0</td><td>0</td></tr></tbody>
+    </table>
+
   </div>
 
   <div class="container">
@@ -112,12 +125,14 @@
     document.getElementById('myChart'),
     config
   );
+
 </script>
 
 <script>
   $(document).ready(function() {
     $("button").click(function() {
       var history = [{block: 0}];
+      var lastBlock = 0;
       
       $("#startForn").hide();
 
@@ -141,29 +156,57 @@
 
             const estPrice1 = result.blockPrices[0].estimatedPrices[1].price;
             const estPriorityFeePerGas1 = result.blockPrices[0].estimatedPrices[1].maxPriorityFeePerGas;
-            const estMaxFeePerGas1 = result.blockPrices[0].estimatedPrices[1].maxFeePerGas;     
+            const estMaxFeePerGas1 = result.blockPrices[0].estimatedPrices[1].maxFeePerGas;
 
-            if (history[history.length-1].block == blockNb) {
+            if (lastBlock == blockNb) {
               myChart.data.labels.pop();
               myChart.data.datasets.forEach((dataset) => {
                   dataset.data.pop();
               });
-
-              history[history.length-1].date = liveDate;
-              history[history.length-1].price = estPrice;
-              history[history.length-1].max = maxPrice;
-              history[history.length-1].tip = estPriorityFeePerGas;
             } else {
-              history.push({
-                date: liveDate,
-                block: blockNb,
-                price: estPrice,
-                max: maxPrice,
-                tip: estPriorityFeePerGas
-              });
-            }
+              lastBlock = blockNb;
 
-            if (myChart.data.labels.length == 150) {
+              const lastDate = new Date($("#myTable > tr").first()[0].childNodes[0].innerText);
+              const lastAvg = $("#myTable > tr").first()[0].childNodes[1].innerText;
+              const lastMin = $("#myTable > tr").first()[0].childNodes[2].innerText;
+              const lastMax = $("#myTable > tr").first()[0].childNodes[3].innerText;
+              const lastPrice = myChart.data.datasets[0].data[myChart.data.datasets[0].data.length-1];
+
+              // if (liveDate.getMinutes() == lastDate.getMinutes()) {
+              if (liveDate.getHours() == lastDate.getHours()) {
+                  if (lastPrice < lastMin || lastMin == 0 ) {
+                    var newMin = lastPrice;
+                  } else {
+                    var newMin = lastMin;
+                  }
+
+                  if (lastPrice > lastMax ) {
+                    var newMax = lastPrice;
+                  } else {
+                    var newMax = lastMax;
+                  }
+
+                  $("#myTable > tr:first").html("<td>" + liveDate + 
+                    "</td><td>" + Math.round((Number(lastPrice) + Number(lastAvg))/2) +
+                    "</td><td>" + newMin +
+                    "</td><td>" + newMax + "</td>");
+              } else {
+                if (lastPrice != null) {
+                  $("#myTable").prepend("<tr><td>" + liveDate +
+                  "</td><td>" + lastPrice +
+                  "</td><td>" + lastPrice + 
+                  "</td><td>" + lastPrice + "</td></tr>");
+                } else {
+                  $("#myTable").html("<tr><td>" + liveDate +
+                  "</td><td>" + 0 +
+                  "</td><td>" + 0 + 
+                  "</td><td>" + 0 + "</td></tr>");
+                }
+              }
+            }
+            
+
+            if (myChart.data.labels.length == 180) {
               myChart.data.labels.shift();
               myChart.data.datasets.forEach((dataset) => {
                   dataset.data.shift();
@@ -190,9 +233,10 @@
             $("#estPriorityFeePerGas1").html(estPriorityFeePerGas1);
             $("#estMaxFeePerGas1").html(estMaxFeePerGas1);
 
-            $("#nbBlocks").html(myChart.data.labels.length);
+            $("#nbBlocks").html(myChart.data.labels.length - 1);
             $("#avgPrice").html(Math.round(calculateAverage(myChart.data.datasets[0].data)));
 
+            $("#nbHours").html($("#myTable > tr").length);
 
             //console.log(history);
         }});
