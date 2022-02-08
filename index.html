@@ -218,7 +218,7 @@
             myChart.data.datasets[1].data.push(estPrice1);
             myChart.update();
 
-            $("title").html(estPrice + " + "  + estPriorityFeePerGas + " Gwei (" + Math.round(sinceLastBlock/1000) + " Secs)");
+            $("title").html(estPrice + " + "  + estPriorityFeePerGas + " Gwei (" + Math.round(sinceLastBlock/1000) + " s)");
             $("#blockNb").html(blockNb);
             $("#basePrice").html(Math.round(basePrice));
             $("#maxPrice").html(maxPrice);
