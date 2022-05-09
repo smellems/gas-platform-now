@@ -19,7 +19,6 @@
       </div>
     </div>
 
-    <h1>Next Block: <strong id="blockNb"></strong></h1>
     <div class="row">
       <div class="col">
         <h2>Base: <strong id="basePrice"></strong> Gwei
@@ -50,8 +49,13 @@
       </div>
     </div>
 
-    <h2>Previous <strong id="nbBlocks"></strong> Blocks + Next Block</h2>
-    <p>Average Price: <strong id="avgPrice"></strong> Gwei</p>
+    <h2>Previous <strong id="nbBlocks"></strong> Blocks + Next Block (<strong id="blockNb"></strong>)</h2>
+    <p>Average Price: <strong id="avgPrice"></strong> Gwei<br/>
+      Pending Prices: <strong id="estPending1"></strong>&nbsp;|
+      <strong id="estPending2"></strong>&nbsp;|
+      <strong id="estPending3"></strong>&nbsp;|
+      <strong id="estPending4"></strong>&nbsp;|
+      <strong id="estPending5"></strong></p>
 
     <canvas id="myChart"></canvas>
 
@@ -76,6 +80,7 @@
       <p class="col-md-4 mb-0 text-muted">&copy; 2021 smellems</p>
   
       <ul class="nav col-md-4 justify-content-end">
+        <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Ethereum</a></li>
         <li class="nav-item"><a href="https://github.com/smellems/gas-platform-now" class="nav-link px-2 text-muted">View on Github</a></li>
       </ul>
     </footer>
@@ -158,6 +163,19 @@
             const estPriorityFeePerGas1 = result.blockPrices[0].estimatedPrices[1].maxPriorityFeePerGas;
             const estMaxFeePerGas1 = result.blockPrices[0].estimatedPrices[1].maxFeePerGas;
 
+            const estPending1 = result.estimatedBaseFees[0]["pending+1"][0].baseFee;
+            const estPending2 = result.estimatedBaseFees[1]["pending+2"][0].baseFee;
+            const estPending3 = result.estimatedBaseFees[2]["pending+3"][0].baseFee;
+            const estPending4 = result.estimatedBaseFees[3]["pending+4"][0].baseFee;
+            const estPending5 = result.estimatedBaseFees[4]["pending+5"][0].baseFee;
+
+            console.log("Pending+1 " + estPending1);
+            console.log("Pending+2 " + estPending2);
+            console.log("Pending+3 " + estPending3);
+            console.log("Pending+4 " + estPending4);
+            console.log("Pending+5 " + estPending5);
+            
+
             if (lastBlock == blockNb) {
               myChart.data.labels.pop();
               myChart.data.datasets.forEach((dataset) => {
@@ -232,6 +250,12 @@
             $("#estPrice1").html(estPrice1);
             $("#estPriorityFeePerGas1").html(estPriorityFeePerGas1);
             $("#estMaxFeePerGas1").html(estMaxFeePerGas1);
+
+            $("#estPending1").html(Math.round(estPending1));
+            $("#estPending2").html(Math.round(estPending2));
+            $("#estPending3").html(Math.round(estPending3));
+            $("#estPending4").html(Math.round(estPending4));
+            $("#estPending5").html(Math.round(estPending5));
 
             $("#nbBlocks").html(myChart.data.labels.length - 1);
             $("#avgPrice").html(Math.round(calculateAverage(myChart.data.datasets[0].data)));
